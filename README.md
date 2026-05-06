@@ -1,4 +1,4 @@
-﻿# Event Ticketing & Booking System WEEk 8
+﻿# Event Ticketing & Booking System WEEK 8
 
 ## 1. Project Overview
 This project is an Event Ticketing & Booking System developed using **Clean Architecture** and **Domain-Driven Design (DDD)** principles. The system allows Event Organizers to manage events, Customers to book tickets, Gate Officers to validate check-ins, and System Admins to handle refunds.

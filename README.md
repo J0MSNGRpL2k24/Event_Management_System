@@ -63,7 +63,7 @@ The following core business rules (invariants) are enforced within the Domain La
 
 This section outlines the tactical DDD patterns used to model the business logic within the `EventManagementSystem.Domain` layer.
 
-### 3.1 Aggregates & Entities
+### 5.1 Aggregates & Entities
 Aggregates serve as consistency boundaries for our business rules.
 
 * **Event [Aggregate Root]**
@@ -118,7 +118,7 @@ Aggregates serve as consistency boundaries for our business rules.
     * `paymentReference`: string?
     * `requestedAt`: DateTime
 
-### 3.2 Value Objects
+### 5.2 Value Objects
 Value objects are defined by their attributes and have no identity.
 
 * **Money**
@@ -132,7 +132,7 @@ Value objects are defined by their attributes and have no identity.
     * `value`: UUID
     * *Methods*: `equals(other)`.
 
-### 3.3 Domain Events
+### 5.3 Domain Events
 Events are triggered by state changes within the domain.
 
 * **Event Management**: `EventCreated`, `EventPublished`, `EventCancelled`.
@@ -140,7 +140,7 @@ Events are triggered by state changes within the domain.
 * **Booking**: `TicketReserved`, `BookingPaid`, `BookingExpired`.
 * **Refunds**: `RefundRequested`, `RefundApproved`, `RefundRejected`, `RefundPaidOut`.
 
-### 3.4 Repository Interfaces
+### 5.4 Repository Interfaces
 These interfaces reside in the Domain layer and are implemented in the Infrastructure layer.
 
 * **IEventRepository**: `findById(id)`, `findPublished()`, `save(event)`.

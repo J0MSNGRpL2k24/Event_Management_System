@@ -15,7 +15,7 @@ The solution is divided into four main layers to ensure strict separation of con
 3.  **`EventManagementSystem.Infrastructure`**: Contains implementations for database access in `Persistence` (PostgreSQL) and external integrations in `ExternalServices`.
 4.  **`EventManagementSystem.Presentation`**: The Web API layer containing `Controllers` to handle HTTP requests.
 
- EventManagementSystem/
+EventManagementSystem/
 ├── EventManagementSystem.sln
 ├── .gitignore
 ├── README.md

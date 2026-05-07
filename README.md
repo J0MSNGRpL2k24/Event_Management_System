@@ -22,26 +22,26 @@ The solution is divided into four main layers to ensure strict separation of con
 │
 ├── EventManagementSystem.Domain/
 │   ├── Entities/          # Aggregate Roots and Entities
-│   ├── Events/            # Domain Events (e.g., EventPublished)
+│   ├── Events/            # Domain Events
 │   ├── Exceptions/        # Domain-specific exceptions
 │   ├── Repositories/      # Domain Repository interfaces
 │   └── ValueObjects/      # Reusable Value Objects (e.g., Money)
 │
 ├── EventManagementSystem.Application/
-│   ├── Commands/          # Use cases that change state (CQRS)
-│   ├── Queries/           # Use cases that retrieve data (CQRS)
+│   ├── Commands/          # Use cases that change state (Write)
+│   ├── Queries/           # Use cases that retrieve data (Read)
 │   ├── DTOs/              # Data Transfer Objects
 │   └── Interfaces/        # Application service abstractions
 │
 ├── EventManagementSystem.Infrastructure/
-│   ├── Persistence/       # PostgreSQL, EF Core DbContext, Repositories
-│   └── ExternalServices/  # Payment Gateway, Notifications, etc.
+│   ├── Persistence/       # PostgreSQL implementation and EF Core
+│   └── ExternalServices/  # Payment, Notifications, and Identity
 │
 └── EventManagementSystem.Presentation/
     ├── Controllers/       # REST API Endpoints
-    ├── Middlewares/       # Exception handling, Logging
+    ├── Middlewares/       # Global exception handling and logging
     ├── appsettings.json   # Configuration settings
-    └── Program.cs         # Application entry point & DI container 
+    └── Program.cs         # Application entry point and DI container
 
     
 

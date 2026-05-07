@@ -15,33 +15,8 @@ The solution is divided into four main layers to ensure strict separation of con
 3.  **`EventManagementSystem.Infrastructure`**: Contains implementations for database access in `Persistence` (PostgreSQL) and external integrations in `ExternalServices`.
 4.  **`EventManagementSystem.Presentation`**: The Web API layer containing `Controllers` to handle HTTP requests.
 
-EventManagementSystem/
-├── EventManagementSystem.sln
-├── .gitignore
-├── README.md
-│
-├── EventManagementSystem.Domain/
-│   ├── Entities/          # Aggregate Roots and Entities
-│   ├── Events/            # Domain Events
-│   ├── Exceptions/        # Domain-specific exceptions
-│   ├── Repositories/      # Domain Repository interfaces
-│   └── ValueObjects/      # Reusable Value Objects (e.g., Money)
-│
-├── EventManagementSystem.Application/
-│   ├── Commands/          # Use cases that change state (Write)
-│   ├── Queries/           # Use cases that retrieve data (Read)
-│   ├── DTOs/              # Data Transfer Objects
-│   └── Interfaces/        # Application service abstractions
-│
-├── EventManagementSystem.Infrastructure/
-│   ├── Persistence/       # PostgreSQL implementation and EF Core
-│   └── ExternalServices/  # Payment, Notifications, and Identity
-│
-└── EventManagementSystem.Presentation/
-    ├── Controllers/       # REST API Endpoints
-    ├── Middlewares/       # Global exception handling and logging
-    ├── appsettings.json   # Configuration settings
-    └── Program.cs         # Application entry point and DI container
+<img width="519" height="580" alt="image" src="https://github.com/user-attachments/assets/eb2c42f9-2c27-464e-ae76-3a787a92de92" />
+
 
     
 

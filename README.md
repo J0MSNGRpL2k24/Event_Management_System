@@ -82,11 +82,11 @@ Aggregates serve as consistency boundaries for our business rules.
     * `id`: CategoryId
     * `eventId`: EventId
     * `name`: string
-    * [cite_start]`price`: Money
-    * [cite_start]`quota`: int
+    * `price`: Money
+    * `quota`: int
     * `remainingQuota`: int
     * `salesStart`: Date
-    * [cite_start]`salesEnd`: Date 
+    * `salesEnd`: Date 
     * `isActive`: bool
 
 * **Booking [Aggregate Root]**

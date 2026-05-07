@@ -15,6 +15,36 @@ The solution is divided into four main layers to ensure strict separation of con
 3.  **`EventManagementSystem.Infrastructure`**: Contains implementations for database access in `Persistence` (PostgreSQL) and external integrations in `ExternalServices`.
 4.  **`EventManagementSystem.Presentation`**: The Web API layer containing `Controllers` to handle HTTP requests.
 
+ EventManagementSystem/
+├── EventManagementSystem.sln
+├── .gitignore
+├── README.md
+│
+├── EventManagementSystem.Domain/
+│   ├── Entities/          # Aggregate Roots and Entities
+│   ├── Events/            # Domain Events (e.g., EventPublished)
+│   ├── Exceptions/        # Domain-specific exceptions
+│   ├── Repositories/      # Domain Repository interfaces
+│   └── ValueObjects/      # Reusable Value Objects (e.g., Money)
+│
+├── EventManagementSystem.Application/
+│   ├── Commands/          # Use cases that change state (CQRS)
+│   ├── Queries/           # Use cases that retrieve data (CQRS)
+│   ├── DTOs/              # Data Transfer Objects
+│   └── Interfaces/        # Application service abstractions
+│
+├── EventManagementSystem.Infrastructure/
+│   ├── Persistence/       # PostgreSQL, EF Core DbContext, Repositories
+│   └── ExternalServices/  # Payment Gateway, Notifications, etc.
+│
+└── EventManagementSystem.Presentation/
+    ├── Controllers/       # REST API Endpoints
+    ├── Middlewares/       # Exception handling, Logging
+    ├── appsettings.json   # Configuration settings
+    └── Program.cs         # Application entry point & DI container 
+
+    
+
 ## 3. Ubiquitous Language Glossary
 To ensure clear communication within the problem domain, we use the following terms and their definitions:
 
@@ -37,7 +67,7 @@ To ensure clear communication within the problem domain, we use the following te
 | **Money** | A value object representing an amount and currency. | Value Object |
 | **Sales Period** | The period during which a ticket category can be purchased. | Value Object (Date Range) |
 | **Payment Deadline** | The deadline for completing payment after a booking is created. | Property / Value Object |
-## 4. Initial Domain Model & Business Rules
+## 4. Business Rules
 The following core business rules (invariants) are enforced within the Domain Layer to ensure system integrity:
 
 *   **Event & Ticket Logic:** 
@@ -54,10 +84,91 @@ The following core business rules (invariants) are enforced within the Domain La
     *   Refunds are prohibited if any ticket in the booking has already been checked-in.
     *   Check-in is only permitted during the allowed event time window and for active tickets.
 
-## 5. Domain Events
-The system utilizes Domain Events to decouple side effects and support an Event-Driven approach:
+## 5. Domain Model Draft
 
-*   **Event Management:** `EventCreated`, `EventPublished`, `EventCancelled`.
-*   **Ticketing:** `TicketCategoryCreated`, `TicketCategoryDisabled`, `TicketCheckedIn`.
-*   **Booking:** `TicketReserved`, `BookingPaid`, `BookingExpired`.
-*   **Refunds:** `RefundRequested`, `RefundApproved`, `RefundRejected`, `RefundPaidOut`.
+This section outlines the tactical DDD patterns used to model the business logic within the `EventManagementSystem.Domain` layer.
+
+### 3.1 Aggregates & Entities
+Aggregates serve as consistency boundaries for our business rules.
+
+* **Event [Aggregate Root]**
+    * `id`: EventId
+    * `organizerId`: UserId
+    * `name`: string
+    * `description`: string
+    * `startDate`: Date
+    * `endDate`: Date
+    * `location`: string
+    * `maxCapacity`: int
+    * `status`: EventStatus (Draft, Published, Cancelled, Completed)
+    * `categories`: TicketCategory[]
+
+* **TicketCategory [Entity]**
+    * `id`: CategoryId
+    * `eventId`: EventId
+    * `name`: string
+    * [cite_start]`price`: Money
+    * [cite_start]`quota`: int
+    * `remainingQuota`: int
+    * `salesStart`: Date
+    * [cite_start]`salesEnd`: Date 
+    * `isActive`: bool
+
+* **Booking [Aggregate Root]**
+    * `id`: BookingId
+    * `customerId`: UserId
+    * `eventId`: EventId
+    * `categoryId`: CategoryId
+    * `quantity`: int 
+    * `totalPrice`: Money 
+    * `status`: BookingStatus (PendingPayment, Paid, Expired, Refunded) 
+    * `paymentDeadline`: DateTime 
+    * `tickets`: Ticket[]
+
+* **Ticket [Entity]**
+    * `id`: TicketId
+    * `bookingId`: BookingId
+    * `code`: TicketCode
+    * `status`: TicketStatus (Active, CheckedIn, Cancelled) 
+    * `checkedInAt`: DateTime? 
+
+* **Refund [Aggregate Root]**
+    * `id`: RefundId
+    * `bookingId`: BookingId
+    * `customerId`: UserId
+    * `amount`: Money
+    * `status`: RefundStatus (Requested, Approved, Rejected, PaidOut) 
+    * `reason`: string?
+    * `rejectionReason`: string?
+    * `paymentReference`: string?
+    * `requestedAt`: DateTime
+
+### 3.2 Value Objects
+Value objects are defined by their attributes and have no identity.
+
+* **Money**
+    * `amount`: Decimal
+    * `currency`: string
+    * *Methods*: `add(Money)`, `multiply(int)`, `isNegative()`.
+* **TicketCode**
+    * `value`: string (UUID)
+    * *Methods*: `generate()`, `equals(other)`.
+* **EventId / BookingId**
+    * `value`: UUID
+    * *Methods*: `equals(other)`.
+
+### 3.3 Domain Events
+Events are triggered by state changes within the domain.
+
+* **Event Management**: `EventCreated`, `EventPublished`, `EventCancelled`.
+* **Ticketing**: `TicketCategoryCreated`, `TicketCategoryDisabled`, `TicketCheckedIn`.
+* **Booking**: `TicketReserved`, `BookingPaid`, `BookingExpired`.
+* **Refunds**: `RefundRequested`, `RefundApproved`, `RefundRejected`, `RefundPaidOut`.
+
+### 3.4 Repository Interfaces
+These interfaces reside in the Domain layer and are implemented in the Infrastructure layer.
+
+* **IEventRepository**: `findById(id)`, `findPublished()`, `save(event)`.
+* **IBookingRepository**: `findById(id)`, `findByCustomerAndEvent()`, `findPendingExpired()`, `save(booking)`.
+* **ITicketRepository**: `findByCode(code)`, `save(ticket)`.
+* **IRefundRepository**: `findById(id)`, `findByBooking(bookingId)`, `save(refund)`.

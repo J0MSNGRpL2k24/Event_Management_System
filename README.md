@@ -1,7 +1,4 @@
-﻿# WEEK 9 - Event Management System
-Framework: dotnet 8.0
-Language: C#
-### 📚 Domain-Driven Design (DDD)
+﻿# Event Ticketing & Booking System WEEk 8
 
 - **Aggregates:** `Event` and `Booking` serve as consistency boundaries.
 - **Value Objects:** `Money` ensures financial integrity (non-negative constraints).
@@ -13,46 +10,37 @@ Language: C#
 
 As of this week, we have implemented **10 User Stories** covering the core domain logic:
 
-### Event Management
+## 3. Ubiquitous Language Glossary
+To ensure clear communication within the problem domain, we use the following terms and their definitions:
 
-- [x] [cite_start]**US-1: Create Event** – Capability to create events in a *Draft* status[cite: 64, 70].
-- [x] [cite_start]**US-2: Publish Event** – Logic to transition status to *Published* with validation requiring at least one active ticket category[cite: 71, 74].
-- [x] [cite_start]**US-3: Cancel Event** – Ability to cancel events, which automatically deactivates all associated ticket categories[cite: 81, 86].
-
-### Ticket Category Management
-
-- [x] [cite_start]**US-4: Create Ticket Category** – Support for defining ticket tiers (VIP, Regular, etc.) with specific quotas and sales periods[cite: 90, 93, 94].
-- [x] [cite_start]**US-5: Disable Ticket Category** – Logic to stop sales for specific categories while maintaining data for historical purposes[cite: 100, 105].
-
-### Event Browsing & Booking
-
-- [x] [cite_start]**US-6: View Available Events** – Query logic to list only *Published* events with filtering options[cite: 108, 111].
-- [x] [cite_start]**US-7: View Event Details** – Detailed query displaying event info and dynamic ticket status (e.g., *Sold Out*, *Coming Soon*)[cite: 115, 120, 122].
-- [x] [cite_start]**US-8: Create Ticket Booking** – Implementation of the reservation aggregate with an automatic 15-minute payment deadline[cite: 124, 139].
-- [x] [cite_start]**US-9: Calculate Booking Total Price** – Automated pricing logic including unit prices, quantities, and service fees through the `Money` Value Object[cite: 141, 144, 145].
-
-### Ticket & Check-in Management
-
-- [x] [cite_start]**US-13: Ticket Check-in** – Gate officer validation logic to ensure active tickets are only used once for event entry[cite: 175, 179, 180].
-
----
-
-## 📢 Implemented Domain Events
-
-> [cite_start]The following domain events have been successfully implemented to trigger side effects[cite: 283]:
-
-1. [cite_start]`EventCreated` [cite: 71]
-2. [cite_start]`EventPublished` [cite: 80]
-3. [cite_start]`EventCancelled` [cite: 88]
-4. [cite_start]`TicketCategoryCreated` [cite: 99]
-5. [cite_start]`TicketCategoryDisabled` [cite: 106]
-6. [cite_start]`TicketReserved` [cite: 140]
-7. [cite_start]`BookingPaid` [cite: 157]
-8. [cite_start]`BookingExpired` [cite: 166]
-9. [cite_start]`TicketCheckedIn` [cite: 184]
-
----
+| Term | Meaning | System Representation |
+| :--- | :--- | :--- |
+| **Event** | An activity organized by an Event Organizer and attended by customers. | Aggregate Root |
+| **Event Organizer** | A user who creates and manages events. | Actor / User Entity |
+| **Customer** | A user who books and purchases tickets. | Actor / User Entity |
+| **Gate Officer** | A user who validates tickets during event check-in. | Actor / User Entity |
+| **Ticket Category** | A type of ticket, such as Regular, VIP, or Early Bird. | Entity (within Event) |
+| **Quota** | The maximum number of tickets available in a ticket category. | Property / Value Object |
+| **Booking** | A temporary reservation before payment is completed. | Aggregate Root |
+| **Pending Payment** | A booking status indicating that payment has not been completed. | Enumeration (Status) |
+| **Paid** | A booking status indicating that payment has been completed. | Enumeration (Status) |
+| **Expired** | A booking status indicating that the payment deadline has passed. | Enumeration (Status) |
+| **Ticket** | Proof of attendance generated after a booking is paid. | Entity (within Booking) |
+| **Ticket Code** | A unique code used to identify and validate a ticket. | Value Object / Identifier |
+| **Check-in** | The process of validating a ticket at the venue. | Domain Event / Process |
+| **Refund** | The process of returning money to a customer. | Aggregate Root / Entity |
+| **Money** | A value object representing an amount and currency. | Value Object |
+| **Sales Period** | The period during which a ticket category can be purchased. | Value Object (Date Range) |
+| **Payment Deadline** | The deadline for completing payment after a booking is created. | Property / Value Object |
+## 4. Initial Domain Model & Business Rules
+The following core business rules (invariants) are enforced within the Domain Layer to ensure system integrity:
 
 ## The rest of the user stories will be implemented in the next week, along with additional domain events and integration tests to ensure system robustness. 
 
+## 5. Domain Events
+The system utilizes Domain Events to decouple side effects and support an Event-Driven approach:
 
+*   **Event Management:** `EventCreated`, `EventPublished`, `EventCancelled`.
+*   **Ticketing:** `TicketCategoryCreated`, `TicketCategoryDisabled`, `TicketCheckedIn`.
+*   **Booking:** `TicketReserved`, `BookingPaid`, `BookingExpired`.
+*   **Refunds:** `RefundRequested`, `RefundApproved`, `RefundRejected`, `RefundPaidOut`.

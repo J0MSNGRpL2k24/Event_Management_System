@@ -145,7 +145,7 @@ public class Event
         // AC: When an event is cancelled, all ticket categories can no longer be purchased
         foreach (var category in _categories)
         {
-            category.Deactivate(); // Menggunakan method Deactivate yang kita buat sebelumnya
+            category.Deactivate(); 
         }
 
         // AC: Raise domain event EventCancelled
@@ -167,5 +167,15 @@ public class Event
 
         // AC: Raise domain event TicketCategoryDisabled
         _domainEvents.Add(new TicketCategoryDisabled(Id, categoryId));
+    }
+
+
+    public void ReleaseTicketQuota(Guid categoryId, int quantity)
+    {
+        var category = _categories.FirstOrDefault(c => c.Id == categoryId);
+        if (category == null)
+            throw new Exception("Ticket category not found.");
+
+        category.ReleaseQuota(quantity);
     }
 }

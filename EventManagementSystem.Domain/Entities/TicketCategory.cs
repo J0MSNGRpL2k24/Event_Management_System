@@ -40,4 +40,12 @@ public class TicketCategory
     {
         IsActive = false;
     }
+
+    public void ReleaseQuota(int quantity)
+    {
+        if (quantity <= 0)
+            throw new ArgumentException("Quantity to release must be greater than zero.");
+
+        RemainingQuota += quantity;
+    }
 }

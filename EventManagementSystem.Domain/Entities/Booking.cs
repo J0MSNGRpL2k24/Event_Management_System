@@ -18,6 +18,8 @@ public class Booking
 
     private readonly List<IDomainEvent> _domainEvents = new();
     public IReadOnlyCollection<IDomainEvent> DomainEvents => _domainEvents.AsReadOnly();
+    private readonly List<Ticket> _tickets = new();
+    public IReadOnlyCollection<Ticket> Tickets => _tickets.AsReadOnly();
 
     private Booking() { }
 
@@ -59,30 +61,56 @@ public class Booking
         return booking;
     }
 
-    
-    public void ConfirmPayment()
+
+    public void ConfirmPayment(Money paymentAmount)
     {
+        // AC: A booking can only be paid if its status is PendingPayment.
         if (Status != BookingStatus.PendingPayment)
             throw new InvalidOperationException("Booking is not in a pending state.");
 
+        // AC: A booking cannot be paid if the payment deadline has passed.
         if (DateTime.UtcNow > PaymentDeadline)
         {
             Expire();
             throw new InvalidOperationException("Payment deadline has passed.");
         }
 
+        // AC: The payment amount must be equal to the total booking price.
+        if (paymentAmount.Amount != TotalPrice.Amount || paymentAmount.Currency != TotalPrice.Currency)
+            throw new InvalidOperationException("Payment amount does not match the total booking price.");
+
         Status = BookingStatus.Paid;
+
+        for (int i = 0; i < Quantity; i++)
+        {
+            string uniqueCode = $"TIX-{Id.ToString().Substring(0, 8).ToUpper()}-{i + 1}";
+            // Tambahkan EventId sebagai parameter kedua
+            _tickets.Add(new Ticket(Id, EventId, uniqueCode));
+        }
+
+        // AC: After the booking is paid, the system raises the domain event BookingPaid.
         AddDomainEvent(new BookingPaid(Id, CustomerId));
     }
 
-   
+
     public void Expire()
     {
-        if (Status == BookingStatus.PendingPayment)
-        {
-            Status = BookingStatus.Expired;
-            AddDomainEvent(new BookingExpired(Id, EventId, CategoryId, Quantity));
-        }
+        
+        if (Status == BookingStatus.Paid)
+            throw new InvalidOperationException("A paid booking cannot be expired.");
+
+       
+        if (Status != BookingStatus.PendingPayment)
+            throw new InvalidOperationException("Booking is not in a pending state.");
+
+        
+        if (DateTime.UtcNow <= PaymentDeadline)
+            throw new InvalidOperationException("Cannot expire a booking before its payment deadline.");
+
+        Status = BookingStatus.Expired;
+
+        
+        AddDomainEvent(new BookingExpired(Id, EventId, CategoryId, Quantity));
     }
 
     private void AddDomainEvent(IDomainEvent domainEvent)
@@ -93,5 +121,21 @@ public class Booking
     public void ClearDomainEvents()
     {
         _domainEvents.Clear();
+    }
+
+    
+    public void MarkAsRefunded()
+    {
+        // AC: The related booking is changed to Refunded.
+        if (Status != BookingStatus.Paid)
+            throw new InvalidOperationException("Only paid bookings can be marked as refunded.");
+
+        Status = BookingStatus.Refunded;
+
+        // AC: Related tickets are changed to Cancelled.
+        foreach (var ticket in _tickets)
+        {
+            ticket.Cancel();
+        }
     }
 }

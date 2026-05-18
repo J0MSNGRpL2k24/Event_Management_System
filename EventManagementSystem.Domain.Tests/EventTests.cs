@@ -63,13 +63,19 @@ public class EventTests
     // ==========================================================
 
     [Fact]
+
+    
     public void PublishEvent_ValidConditions_ShouldChangeStatusToPublished()
     {
         // Arrange
-        var @event = Event.Create(Guid.NewGuid(), "Tech Fest", "Desc", DateTime.UtcNow.AddDays(1), DateTime.UtcNow.AddDays(2), "Location", 1000);
+        var startDate = DateTime.UtcNow.AddDays(10); // Event mulai 10 hari lagi
+        var endDate = DateTime.UtcNow.AddDays(12);
+        var salesStart = DateTime.UtcNow;
+        var salesEnd = startDate.AddDays(-3); // Tiket ditutup 3 HARI SEBELUM event mulai
 
-        // Memanggil AddTicketCategory sesuai parameter di Event.cs: name, price, quota, salesStart, salesEnd
-        @event.AddTicketCategory("VIP", new Money(150000), 500, DateTime.UtcNow, DateTime.UtcNow.AddDays(7));
+        var @event = Event.Create(Guid.NewGuid(), "Tech Fest", "Desc", startDate, endDate, "Location", 1000);
+
+        @event.AddTicketCategory("VIP", new Money(150000), 500, salesStart, salesEnd);
 
         // Act
         @event.Publish();
@@ -78,6 +84,7 @@ public class EventTests
         Assert.Equal(EventStatus.Published, @event.Status);
         Assert.Contains(@event.DomainEvents, e => e is EventPublished);
     }
+
 
     [Fact]
     public void PublishEvent_NoTicketCategory_ShouldThrowException()
@@ -107,11 +114,19 @@ public class EventTests
     // ==========================================================
 
     [Fact]
+
+   
     public void CancelEvent_PublishedEvent_ShouldChangeStatusToCancelled()
     {
         // Arrange
-        var @event = Event.Create(Guid.NewGuid(), "Tech Fest", "Desc", DateTime.UtcNow.AddDays(1), DateTime.UtcNow.AddDays(2), "Location", 1000);
-        @event.AddTicketCategory("VIP", new Money(150000), 500, DateTime.UtcNow, DateTime.UtcNow.AddDays(7));
+        var startDate = DateTime.UtcNow.AddDays(10); // Event mulai 10 hari lagi
+        var endDate = DateTime.UtcNow.AddDays(12);
+        var salesStart = DateTime.UtcNow;
+        var salesEnd = startDate.AddDays(-3); // Tiket ditutup 3 HARI SEBELUM event mulai
+
+        var @event = Event.Create(Guid.NewGuid(), "Tech Fest", "Desc", startDate, endDate, "Location", 1000);
+
+        @event.AddTicketCategory("VIP", new Money(150000), 500, salesStart, salesEnd);
         @event.Publish(); // Status sekarang Published
 
         // Act

@@ -21,12 +21,13 @@ public class CheckInTicketCommandHandler : IRequestHandler<CheckInTicketCommand>
         // AC 1: If the ticket code is not found...
         if (ticket == null)
             throw new Exception("The ticket is invalid."); // Pesan disesuaikan dengan AC
-
-        var @event = await _eventRepository.GetByIdAsync(ticket.EventId);
+                                                           // Ambil event berdasarkan lokasi tempat Gate Officer melakukan scan
+        var @event = await _eventRepository.GetByIdAsync(request.EventId);
 
         if (@event == null)
-            throw new Exception("Event not found.");
+            throw new Exception("Event not found."); 
 
+        
         ticket.CheckIn(@event);
 
         await _ticketRepository.SaveAsync(ticket);

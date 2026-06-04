@@ -5,6 +5,7 @@ namespace EventManagementSystem.Domain.Entities;
 public class TicketCategory
 {
     public Guid Id { get; private set; }
+   
     public Guid EventId { get; private set; }
     public string Name { get; private set; }
     public Money Price { get; private set; }
@@ -14,6 +15,7 @@ public class TicketCategory
     public DateTime SalesEnd { get; private set; }
     public bool IsActive { get; private set; }
 
+    private TicketCategory() { Name = null!; Price = null!; }
 
     internal TicketCategory(Guid eventId, string name, Money price, int quota, DateTime salesStart, DateTime salesEnd)
     {

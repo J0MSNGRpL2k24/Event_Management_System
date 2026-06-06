@@ -25,14 +25,14 @@ public class AppDbContext : DbContext
         {
             entity.ToTable("Events");
             entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).ValueGeneratedNever(); 
 
-            //  Entity Framework Core tidak boleh membuat kolom untuk DomainEvents!
+            
             entity.Ignore(e => e.DomainEvents);
 
             // Simpan Enum sebagai String agar tabel PostgreSQL mudah dibaca (Draft, Published, dll)
             entity.Property(e => e.Status).HasConversion<string>();
 
-            
             entity.Metadata.FindNavigation(nameof(Event.Categories))
                   ?.SetPropertyAccessMode(PropertyAccessMode.Field);
 
@@ -48,6 +48,7 @@ public class AppDbContext : DbContext
         {
             entity.ToTable("TicketCategories");
             entity.HasKey(c => c.Id);
+            entity.Property(c => c.Id).ValueGeneratedNever(); 
 
             // Mapping Value Object 'Money' agar jadi kolom 'PriceAmount' dan 'PriceCurrency'
             entity.OwnsOne(c => c.Price, price =>
@@ -62,11 +63,9 @@ public class AppDbContext : DbContext
         {
             entity.ToTable("Bookings");
             entity.HasKey(b => b.Id);
+            entity.Property(b => b.Id).ValueGeneratedNever(); 
 
-           
             entity.Ignore(b => b.DomainEvents);
-
-          
             entity.Property(b => b.Status).HasConversion<string>();
 
             // Mapping Value Object Money untuk TotalPrice
@@ -91,11 +90,10 @@ public class AppDbContext : DbContext
         {
             entity.ToTable("Tickets");
             entity.HasKey(t => t.Id);
+            entity.Property(t => t.Id).ValueGeneratedNever(); 
 
             // Abaikan DomainEvents
             entity.Ignore(t => t.DomainEvents);
-
-            
             entity.Property(t => t.Status).HasConversion<string>();
 
             // Buat index unik untuk TicketCode agar pencarian saat Check-In lebih cepat
@@ -107,11 +105,9 @@ public class AppDbContext : DbContext
         {
             entity.ToTable("Refunds");
             entity.HasKey(r => r.Id);
+            entity.Property(r => r.Id).ValueGeneratedNever(); 
 
-           
             entity.Ignore(r => r.DomainEvents);
-
-            
             entity.Property(r => r.Status).HasConversion<string>();
 
             // Mapping Value Object Money untuk nominal Refund

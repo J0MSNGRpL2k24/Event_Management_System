@@ -32,34 +32,15 @@ public class EventRepository : IEventRepository
 
     public async Task SaveAsync(Event @event)
     {
-        // Cek apakah Event sudah ada di DB
-        var isNew = await _context.Events.AsNoTracking().AnyAsync(e => e.Id == @event.Id) == false;
-
-        if (isNew)
+        
+        if (_context.Entry(@event).State == EntityState.Detached)
         {
             await _context.Events.AddAsync(@event);
         }
-        else
-        {
-            // PENTING: Jangan gunakan _context.Update(@event) secara membabi buta.
-            // Cukup biarkan EF Core melacak perubahan pada koleksi kategori saja.
-            foreach (var category in @event.Categories)
-            {
-                var entry = _context.Entry(category);
 
-                // Jika status tiket adalah Added, tapi di DB sudah ada, 
-                // ubah menjadi Unchanged agar tidak di-insert ulang.
-                if (entry.State == EntityState.Added)
-                {
-                    var exists = await _context.Set<TicketCategory>().AnyAsync(c => c.Id == category.Id);
-                    if (exists)
-                    {
-                        entry.State = EntityState.Unchanged;
-                    }
-                }
-            }
-        }
-
+        
+        
+       
         await _context.SaveChangesAsync();
     }
 }

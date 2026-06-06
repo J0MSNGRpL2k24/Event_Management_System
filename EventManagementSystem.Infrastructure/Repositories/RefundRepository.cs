@@ -26,10 +26,19 @@ public class RefundRepository : IRefundRepository
 
     public async Task SaveAsync(Refund refund)
     {
-        if (!_context.Refunds.Local.Any(r => r.Id == refund.Id))
+        
+        var exists = await _context.Refunds.AnyAsync(r => r.Id == refund.Id);
+
+        if (!exists)
+        {
+           
+            await _context.Refunds.AddAsync(refund);
+        }
+        else
         {
             _context.Refunds.Update(refund);
         }
+
         await _context.SaveChangesAsync();
     }
 }

@@ -4,6 +4,9 @@ using EventManagementSystem.Application.Commands.CreateTicketCategory;
 using EventManagementSystem.Application.Commands.PublishEvent;
 using EventManagementSystem.Application.Queries.GetAvailableEvents;
 using EventManagementSystem.Application.Queries.GetEventById;
+using EventManagementSystem.Application.Queries.GetEventDetail;
+using EventManagementSystem.Application.Queries.ViewEventParticipants;
+using EventManagementSystem.Application.Queries.ViewEventSalesReport;
 using EventManagementSystem.Domain.Entities;
 using EventManagementSystem.Infrastructure.Persistence;
 using MediatR;
@@ -66,19 +69,7 @@ public class EventsController : ControllerBase
         var categoryId = await _mediator.Send(command);
         return Ok(categoryId);
     }
-    [HttpGet("{id}")]
-    public async Task<IActionResult> GetById(Guid id)
-    {
-        var query = new GetEventByIdQuery(id);
-        var result = await _mediator.Send(query);
-
-        if (result == null)
-        {
-            return NotFound($"Event with ID {id} not found.");
-        }
-
-        return Ok(result);
-    }
+   
 
 
     [HttpPost("{id}/cancel")]
@@ -113,6 +104,83 @@ public class EventsController : ControllerBase
         @event.ResetToPublishedForTest();
         await _context.SaveChangesAsync();
         return Ok("Status reset to Published (1)");
+    }
+    
+    
+    
+    // --- USER STORY 6: View Available Events ---
+    // Endpoint: GET /api/events
+
+    [HttpGet]
+    public async Task<IActionResult> GetAvailableEvents([FromQuery] DateTime? filterDate, [FromQuery] string? filterLocation)
+    {
+        try
+        {
+            var query = new GetAvailableEventsQuery(filterDate, filterLocation);
+            var result = await _mediator.Send(query);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { Message = ex.Message });
+        }
+    }
+
+    // --- USER STORY 7: View Event Details ---
+    // Endpoint: GET /api/events/{id}
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetEventDetails(Guid id)
+    {
+        try
+        {
+            // Menggunakan GetEventDetailQuery yang sudah kamu buat handler-nya
+            var query = new GetEventDetailQuery(id);
+            var result = await _mediator.Send(query);
+
+            if (result == null)
+            {
+                return NotFound(new { Message = $"Event with ID {id} not found." });
+            }
+
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { Message = ex.Message });
+        }
+    }
+
+
+    // --- USER STORY 19: View Event Sales Report ---
+    [HttpGet("{id}/sales-report")]
+    public async Task<IActionResult> GetSalesReport(Guid id)
+    {
+        try
+        {
+            var query = new ViewEventSalesReportQuery(id);
+            var result = await _mediator.Send(query);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { Message = ex.Message });
+        }
+    }
+
+    // --- USER STORY 20: View Event Participants ---
+    [HttpGet("{id}/participants")]
+    public async Task<IActionResult> GetParticipants(Guid id)
+    {
+        try
+        {
+            var query = new ViewEventParticipantsQuery(id);
+            var result = await _mediator.Send(query);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { Message = ex.Message });
+        }
     }
 
 }

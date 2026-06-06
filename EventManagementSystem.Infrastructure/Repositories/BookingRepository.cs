@@ -48,10 +48,15 @@ public class BookingRepository : IBookingRepository
 
     public async Task SaveAsync(Booking booking)
     {
-        if (!_context.Bookings.Local.Any(b => b.Id == booking.Id))
+        // Cek apakah booking ini adalah data BARU yang belum dilacak
+        if (_context.Entry(booking).State == EntityState.Detached)
         {
-            _context.Bookings.Update(booking);
+          
+            await _context.Bookings.AddAsync(booking);
         }
+
+        // Jika data lama, EF Core otomatis melacaknya dari GetByIdAsync.
+        // Langsung save saja.
         await _context.SaveChangesAsync();
     }
 

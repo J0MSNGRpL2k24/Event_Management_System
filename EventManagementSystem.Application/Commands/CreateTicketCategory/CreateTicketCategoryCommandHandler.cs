@@ -1,6 +1,7 @@
 ﻿using EventManagementSystem.Domain.Repositories;
 using EventManagementSystem.Domain.ValueObjects;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace EventManagementSystem.Application.Commands.CreateTicketCategory;
 
@@ -29,6 +30,7 @@ public class CreateTicketCategoryCommandHandler : IRequestHandler<CreateTicketCa
         );
 
         await _eventRepository.SaveAsync(@event);
+        
 
         return @event.Categories.Last().Id;
     }

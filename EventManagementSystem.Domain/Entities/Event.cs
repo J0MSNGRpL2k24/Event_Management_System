@@ -133,19 +133,24 @@ public class Event
     {
         // AC: An event with the status Completed cannot be cancelled
         if (Status == EventStatus.Completed)
+        {
             throw new InvalidOperationException("Cannot cancel an event that is already completed.");
+        }
 
-        // AC: An event with the status Published can be cancelled 
-        
+        // AC: An event with the status Published (or Draft) can be cancelled 
+        // Berdasarkan logic-mu, jika status bukan Published/Draft/Completed, 
+        // kemungkinan besar itu Cancelled itu sendiri.
         if (Status != EventStatus.Published && Status != EventStatus.Draft)
+        {
             throw new InvalidOperationException("Only Published or Draft events can be cancelled.");
+        }
 
         Status = EventStatus.Cancelled;
 
         // AC: When an event is cancelled, all ticket categories can no longer be purchased
         foreach (var category in _categories)
         {
-            category.Deactivate(); 
+            category.Deactivate();
         }
 
         // AC: Raise domain event EventCancelled
@@ -177,5 +182,15 @@ public class Event
             throw new Exception("Ticket category not found.");
 
         category.ReleaseQuota(quantity);
+    }
+    public void Complete()
+    {
+        // Cek apakah boleh di-complete
+        Status = EventStatus.Completed;
+    }
+
+    public void ResetToPublishedForTest()
+    {
+        Status = EventStatus.Published;
     }
 }

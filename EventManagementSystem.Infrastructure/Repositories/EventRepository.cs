@@ -1,7 +1,6 @@
 ﻿using EventManagementSystem.Domain.Entities;
 using EventManagementSystem.Domain.Repositories;
 using EventManagementSystem.Infrastructure.Persistence;
-
 using Microsoft.EntityFrameworkCore;
 using System;
 
@@ -18,7 +17,7 @@ public class EventRepository : IEventRepository
 
     public async Task<Event?> GetByIdAsync(Guid id)
     {
-        //  menggunakan Include() agar list TicketCategory ikut ditarik dari DB
+        // Tetap gunakan Include agar tiket lama maupun baru terdeteksi oleh Change Tracker
         return await _context.Events
             .Include(e => e.Categories)
             .FirstOrDefaultAsync(e => e.Id == id);
@@ -33,11 +32,34 @@ public class EventRepository : IEventRepository
 
     public async Task SaveAsync(Event @event)
     {
-        // Jika entity belum di-track oleh Entity Framework, maka tambahkan ke context. Jika sudah di-track, maka update.
-        if (!_context.Events.Local.Any(e => e.Id == @event.Id))
+        // Cek apakah Event sudah ada di DB
+        var isNew = await _context.Events.AsNoTracking().AnyAsync(e => e.Id == @event.Id) == false;
+
+        if (isNew)
         {
-            _context.Events.Update(@event);
+            await _context.Events.AddAsync(@event);
         }
+        else
+        {
+            // PENTING: Jangan gunakan _context.Update(@event) secara membabi buta.
+            // Cukup biarkan EF Core melacak perubahan pada koleksi kategori saja.
+            foreach (var category in @event.Categories)
+            {
+                var entry = _context.Entry(category);
+
+                // Jika status tiket adalah Added, tapi di DB sudah ada, 
+                // ubah menjadi Unchanged agar tidak di-insert ulang.
+                if (entry.State == EntityState.Added)
+                {
+                    var exists = await _context.Set<TicketCategory>().AnyAsync(c => c.Id == category.Id);
+                    if (exists)
+                    {
+                        entry.State = EntityState.Unchanged;
+                    }
+                }
+            }
+        }
+
         await _context.SaveChangesAsync();
     }
 }

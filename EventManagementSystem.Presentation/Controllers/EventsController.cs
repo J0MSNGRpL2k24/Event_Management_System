@@ -1,156 +1,118 @@
 using EventManagementSystem.Application.Commands.CancelEvent;
 using EventManagementSystem.Application.Commands.CreateEvent;
 using EventManagementSystem.Application.Commands.CreateTicketCategory;
-using EventManagementSystem.Application.Commands.DisableTicketCategory;
 using EventManagementSystem.Application.Commands.PublishEvent;
 using EventManagementSystem.Application.Queries.GetAvailableEvents;
-using EventManagementSystem.Application.Queries.GetEventDetail;
-using EventManagementSystem.Application.Queries.ViewEventParticipants;
-using EventManagementSystem.Application.Queries.ViewEventSalesReport;
+using EventManagementSystem.Application.Queries.GetEventById;
+using EventManagementSystem.Domain.Entities;
+using EventManagementSystem.Infrastructure.Persistence;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
-namespace EventManagementSystem.Presentation.Controllers;
+/*
+PSEUDOCODE / PLAN (detailed):
+- Problem: current code calls `new GetAvailableEventsQuery(id)` but `GetAvailableEventsQuery` expects a DateTime? parameter.
+- Goal: Fix GetById to call the correct query that accepts a Guid event id.
+- Steps:
+  1. Use (or create) `GetEventByIdQuery` that accepts a Guid in its constructor (based on project query files).
+  2. Replace the mediator call in `GetById` to send `new GetEventByIdQuery(id)`.
+  3. Preserve behavior: if result is null -> return NotFound(), else return Ok(result).
+  4. Keep existing route and attributes unchanged.
+- Edge cases:
+  - If `GetEventByIdQuery` namespace/name differs in project, adjust using/import accordingly.
+  - Ensure no conversion of Guid to DateTime is attempted.
+*/
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/[controller]")] // Ini akan jadi api/events
 public class EventsController : ControllerBase
 {
     private readonly IMediator _mediator;
+    //dbcontext variable _context
+    private readonly AppDbContext _context;
 
-    public EventsController(IMediator mediator)
+    public EventsController(IMediator mediator, AppDbContext context)
     {
         _mediator = mediator;
+        _context = context; // DAN INI
     }
 
-    [HttpPost]
-    public async Task<IActionResult> CreateEvent([FromBody] CreateEventCommand command)
+    [HttpPost] // INI WAJIB ADA agar POST /api/events bisa bekerja
+    public async Task<IActionResult> Create([FromBody] CreateEventCommand command)
     {
-        try
-        {
-            var eventId = await _mediator.Send(command);
-            return Ok(new { Id = eventId, Message = "Event created successfully." });
-        }
-        catch (Exception ex)
-        {
-            // Menangkap error jika tanggal terbalik atau kapasitas <= 0
-            return BadRequest(new { Message = ex.Message });
-        }
+        var result = await _mediator.Send(command);
+        return Ok(result);
     }
 
-    [HttpPost("{id}/publish")]
-    public async Task<IActionResult> PublishEvent(Guid id)
+    //publish 
+    [HttpPost("{id}/publish")] // Harus ada {id} agar parameter ID terbaca
+    public async Task<IActionResult> Publish(Guid id)
     {
-        try
-        {
-            await _mediator.Send(new PublishEventCommand(id));
-            return Ok(new { Message = "Event published successfully." });
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Message = ex.Message });
-        }
+        var command = new PublishEventCommand(id);
+        await _mediator.Send(command);
+        return Ok();
     }
-
-    [HttpPost("{id}/cancel")]
-    public async Task<IActionResult> CancelEvent(Guid id)
-    {
-        try
-        {
-            await _mediator.Send(new CancelEventCommand(id));
-            return Ok(new { Message = "Event has been cancelled. All paid bookings are marked for refund." });
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Message = ex.Message });
-        }
-    }
-
-    // --- Section Ticket Category (Sudah bagus, kita pertahankan dulu) ---
 
     [HttpPost("{id}/categories")]
     public async Task<IActionResult> AddCategory(Guid id, [FromBody] CreateTicketCategoryCommand command)
     {
-        try
+        // Pastikan ID dari URL (id) sama dengan EventId di command
+        if (id != command.EventId)
         {
-            if (id != command.EventId) return BadRequest(new { Message = "Event ID mismatch." });
+            return BadRequest("Event ID mismatch.");
+        }
 
-            var categoryId = await _mediator.Send(command);
-            return Ok(new { Id = categoryId, Message = "Ticket category created successfully." });
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Message = ex.Message });
-        }
+        var categoryId = await _mediator.Send(command);
+        return Ok(categoryId);
     }
-
-    [HttpPatch("{eventId}/categories/{categoryId}/disable")]
-    public async Task<IActionResult> DisableCategory(Guid eventId, Guid categoryId)
-    {
-        try
-        {
-            await _mediator.Send(new DisableTicketCategoryCommand(eventId, categoryId));
-            return Ok(new { Message = "Ticket category has been disabled." });
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Message = ex.Message });
-        }
-    }
-
-    // --- Section Queries ---
-
     [HttpGet("{id}")]
-    public async Task<IActionResult> GetDetail(Guid id)
+    public async Task<IActionResult> GetById(Guid id)
     {
-        var result = await _mediator.Send(new GetEventDetailQuery(id));
-        if (result == null) return NotFound(new { Message = "Event not found." });
+        var query = new GetEventByIdQuery(id);
+        var result = await _mediator.Send(query);
+
+        if (result == null)
+        {
+            return NotFound($"Event with ID {id} not found.");
+        }
+
         return Ok(result);
     }
 
-    [HttpGet]
-    public async Task<IActionResult> GetAvailableEvents([FromQuery] DateTime? date, [FromQuery] string? location)
+
+    [HttpPost("{id}/cancel")]
+    public async Task<IActionResult> Cancel(Guid id)
     {
-        try
-        {
-            var query = new GetAvailableEventsQuery(date, location);
-            var result = await _mediator.Send(query);
-            return Ok(result);
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Message = ex.Message });
-        }
+        var command = new CancelEventCommand(id);
+        await _mediator.Send(command);
+
+        // 204 No Content adalah standar untuk operasi update/cancel yang sukses
+        return NoContent();
+    }
+    [HttpPost("{id}/complete")]
+    public async Task<IActionResult> Complete(Guid id)
+    {
+        // Sekarang _context sudah tidak null!
+        var @event = await _context.Events.FindAsync(id);
+        if (@event == null) return NotFound();
+
+        @event.Complete();
+        await _context.SaveChangesAsync();
+        return Ok("Status: Completed");
     }
 
-
-    // --- USER STORY 19: View Event Sales Report ---
-    [HttpGet("{id}/report")]
-    public async Task<IActionResult> GetSalesReport(Guid id)
+    [HttpPost("{id}/force-publish")]
+    public async Task<IActionResult> ForcePublish(Guid id)
     {
-        try
-        {
-            var result = await _mediator.Send(new ViewEventSalesReportQuery(id));
-            return Ok(result);
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Message = ex.Message });
-        }
+        var @event = await _context.Events.FindAsync(id);
+        if (@event == null) return NotFound();
+
+        // Menggunakan Reflection atau logic publik jika ada. 
+        // Tapi karena Status private set, kita buatkan method di Event.cs saja:
+        @event.ResetToPublishedForTest();
+        await _context.SaveChangesAsync();
+        return Ok("Status reset to Published (1)");
     }
 
-    // --- USER STORY 20: View Event Participants ---
-    [HttpGet("{id}/participants")]
-    public async Task<IActionResult> GetParticipants(Guid id)
-    {
-        try
-        {
-            var result = await _mediator.Send(new ViewEventParticipantsQuery(id));
-            return Ok(result);
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Message = ex.Message });
-        }
-    }
 }

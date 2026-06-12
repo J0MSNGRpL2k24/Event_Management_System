@@ -32,6 +32,9 @@ We designed and implemented specific controllers to handle distinct aggregate ro
 * **MediatR** (for CQRS implementation)
 * **Swagger / OpenAPI** (for API documentation and testing)
 
+## API DOCUMENTATION
+* [Event Management System API Documentation.pdf](./docs/Event%20Management%20System%20API%20Documentation.pdf)
+
 ## How to Run & Test the API
 
 1. Ensure your PostgreSQL database is running and migrations are up to date.

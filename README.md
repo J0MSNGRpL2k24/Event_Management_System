@@ -1,46 +1,42 @@
-# Week 12: Infrastructure Layer Implementation (Data Persistence)
+# Week 13: Presentation Layer & API Integration
 
 ## Overview
-This week, our focus was entirely on establishing the **Infrastructure Layer** for the Event Management System. We integrated **Entity Framework Core (EF Core)** with **PostgreSQL** to handle data persistence, ensuring that all business rules and invariants defined within the Domain Layer remain isolated and uncompromised.
+This week, our focus shifted to the **Presentation Layer**, which serves as the entry point for external clients to interact with the Event Management System. We implemented a RESTful Web API using ASP.NET Core, strictly adhering to the principles of **Clean Architecture**.
 
-By adhering to the principles of **Clean Architecture** and **Domain-Driven Design (DDD)**, the Infrastructure layer solely implements the repository interfaces defined in the Domain layer, acting as an adapter rather than dictating the business logic.
+The Presentation Layer contains absolutely no business logic or direct database access. Instead, it utilizes the **CQRS (Command and Query Responsibility Segregation)** pattern via **MediatR** to dispatch incoming HTTP requests as Commands or Queries to the Application Layer. This ensures that the Web API remains a thin, lightweight routing mechanism.
 
 ## Key Accomplishments & Features
 
-### 1. Database Context & Fluent API Configuration
-We successfully configured the `AppDbContext` to map our rich Domain Models into relational database tables using the Fluent API.
-* **Value Object Mapping:** Mapped the `Money` Value Object using `.OwnsOne()`, splitting it into `Amount` and `Currency` columns across relevant tables (`Events`, `TicketCategories`, `Bookings`, `Refunds`).
-* **Enum Conversions:** Configured enums (e.g., `BookingStatus`, `TicketStatus`, `RefundStatus`) to be stored as readable strings in the database using `.HasConversion<string>()`.
-* **Private Constructors for EF Core:** Added parameterless private constructors to entities (e.g., `TicketCategory`) to allow EF Core to materialize objects from the database without breaking domain encapsulation.
-* **Ignoring Domain Events:** Explicitly ignored `DomainEvents` in the EF Core model builder (`.Ignore(e => e.DomainEvents)`) to prevent them from being mapped as database columns.
+### 1. RESTful API Controllers
+We designed and implemented specific controllers to handle distinct aggregate roots and operations within the system:
+* **`EventsController`**: Manages the complete event lifecycle (Create, Add Categories, Publish, Cancel) and serves queries for available events and detailed sales reports (US 1-7, US 19-20).
+* **`BookingsController`**: Handles ticket reservations, calculates totals, and processes payment confirmations with strict 15-minute deadline validations (US 8-11).
+* **`TicketsController`**: Manages ticket visibility for customers and facilitates secure, gate-level ticket scanning/check-in operations for gate officers (US 12-14).
+* **`RefundsController`**: Provides endpoints for the end-to-end refund workflow, including customer requests, organizer approvals/rejections, and admin payout confirmations (US 15-18).
 
-### 2. Repository Implementations
-We implemented the concrete repositories inside the `Infrastructure/Repositories` directory, strictly adhering to the contracts defined by the Domain's `IRepository` interfaces.
-* **`EventRepository`**: Handles fetching and persisting Events along with their child entities (`TicketCategories`).
-* **`BookingRepository`**: Manages the persistence of Customer Bookings. Leverages EF Core's `.Include(b => b.Tickets)` to eagerly load related tickets. Implemented a specific query for batch processing (`MarkBookingsForRefundAsync`).
-* **`TicketRepository`**: Optimized for Gate Officers by implementing `GetByCodeAsync` for rapid Check-In operations, supported by a unique index constraint on the `TicketCode`.
-* **`RefundRepository`**: Manages the state of refund requests related to cancelled events or customer claims.
+### 2. MediatR Integration & CQRS
+* Completely decoupled the HTTP request handling from the application logic. Each controller endpoint simply constructs a Command (e.g., `ApproveRefundCommand`) or a Query (e.g., `ViewEventSalesReportQuery`) and sends it through the MediatR pipeline.
+* Mapped MediatR handler responses directly to appropriate HTTP Status Codes (e.g., `200 OK`, `204 No Content`).
 
-### 3. Leveraging EF Core Change Tracking
-Instead of creating separate repositories for child entities (like `TicketCategory` or `Ticket`), we utilized EF Core's built-in **Change Tracking**. 
-When the Application layer executes behaviors on the Aggregate Root (e.g., `booking.ConfirmPayment()` which generates new `Ticket` entities), simply calling `_bookingRepository.SaveAsync(booking)` commands EF Core to automatically track the new children and execute the necessary `INSERT` and `UPDATE` statements atomically.
+### 3. Data Transfer Objects (DTOs) & Route Management
+* Implemented specific request DTOs (e.g., `RejectRefundDto`, `PayoutRefundDto`) to cleanly capture payload data from the HTTP Body without conflicting with URL path parameters (`{id}`).
+* Designed clean, predictable, and resource-oriented URI paths (e.g., `POST /api/refunds/{id}/approve`, `GET /api/events/{id}/participants`).
 
-### 4. Code-First Database Migrations
-Successfully generated the initial database schema reflecting the complete Domain Model.
-* Generated migration: `CompleteDomainSchema`
-* Connected the `Presentation` (API) layer to the `Infrastructure` layer via Dependency Injection in `Program.cs`.
+### 4. Exception Handling
+* Implemented structured `try-catch` blocks within the controllers to catch Domain-level exceptions (e.g., "The refund deadline has passed") and Application-level exceptions (e.g., "Event not found").
+* Mapped these internal exceptions to appropriate standard HTTP responses (returning `400 Bad Request` or `404 Not Found` with clear error messages) to ensure a secure and informative client experience.
 
 ## Technologies Used
 * **.NET 9.0**
-* **Entity Framework Core 9.0** (`Microsoft.EntityFrameworkCore.Design`, `Microsoft.EntityFrameworkCore.Relational`)
-* **Npgsql** (PostgreSQL Provider for EF Core)
+* **ASP.NET Core Web API**
+* **MediatR** (for CQRS implementation)
+* **Swagger / OpenAPI** (for API documentation and testing)
 
-## How to Run Migrations
-To apply the migrations and update your local PostgreSQL database, ensure your database connection string is properly set in the `EventManagementSystem.Presentation/appsettings.json` file, then run:
+## How to Run & Test the API
+
+1. Ensure your PostgreSQL database is running and migrations are up to date.
+2. Build and run the Presentation layer:
 
 ```bash
-# To add a new migration (if domain models change)
-dotnet ef migrations add <MigrationName> --project EventManagementSystem.Infrastructure --startup-project EventManagementSystem.Presentation
-
-# To update the database schema
-dotnet ef database update --project EventManagementSystem.Infrastructure --startup-project EventManagementSystem.Presentation
+cd EventManagementSystem.Presentation
+dotnet run

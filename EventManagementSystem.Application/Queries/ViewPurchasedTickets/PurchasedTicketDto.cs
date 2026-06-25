@@ -5,6 +5,6 @@ public record PurchasedTicketDto(
     Guid EventId,
     string EventName,
     DateTime EventDate,
-    string TicketCode, // AC: Each ticket must have a unique ticket code.
-    string Status      // AC: Active, CheckedIn, Cancelled, or RefundRequired
+    string TicketCode,
+    string Status
 );

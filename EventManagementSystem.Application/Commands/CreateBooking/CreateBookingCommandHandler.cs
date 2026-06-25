@@ -17,7 +17,6 @@ public class CreateBookingCommandHandler : IRequestHandler<CreateBookingCommand,
 
     public async Task<Guid> Handle(CreateBookingCommand request, CancellationToken cancellationToken)
     {
-        // AC: Customer cannot have more than one active booking for the same event
         if (await _bookingRepository.HasActiveBookingAsync(request.CustomerId, request.EventId))
             throw new InvalidOperationException("You already have an active booking for this event.");
 

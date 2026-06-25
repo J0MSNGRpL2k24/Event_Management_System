@@ -17,10 +17,8 @@ public class RejectRefundCommandHandler : IRequestHandler<RejectRefundCommand>
         var refund = await _refundRepository.GetByIdAsync(request.RefundId);
         if (refund == null) throw new Exception("Refund request not found.");
 
-        // Panggil domain logic
         refund.Reject(request.RejectionReason);
 
-        // Simpan perubahan status dan alasan penolakan
         await _refundRepository.SaveAsync(refund);
     }
 }

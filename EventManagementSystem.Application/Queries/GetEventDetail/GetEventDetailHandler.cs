@@ -20,9 +20,8 @@ public class GetEventDetailHandler : IRequestHandler<GetEventDetailQuery, EventD
 
         var now = DateTime.UtcNow;
 
-        // Mapping Categories dengan Logic Status (US 7)
         var categoriesDto = @event.Categories
-            .Where(c => c.IsActive) // Hanya tampilkan yang aktif
+            .Where(c => c.IsActive)
             .Select(c => {
                 string status = "Available";
 
@@ -48,7 +47,7 @@ public class GetEventDetailHandler : IRequestHandler<GetEventDetailQuery, EventD
             @event.Description,
             @event.StartDate,
             @event.Location,
-            "Event Organizer", // Nanti bisa ambil dari entity Organizer jika ada
+            "Event Organizer",
             categoriesDto
         );
     }

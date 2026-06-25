@@ -17,7 +17,6 @@ public class DisableTicketCategoryCommandHandler : IRequestHandler<DisableTicket
         var @event = await _eventRepository.GetByIdAsync(request.EventId);
         if (@event == null) throw new Exception("Event not found.");
 
-        // Panggil logic di Domain
         @event.DisableTicketCategory(request.CategoryId);
 
         await _eventRepository.SaveAsync(@event);

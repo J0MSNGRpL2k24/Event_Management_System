@@ -17,10 +17,8 @@ public class MarkRefundAsPaidOutCommandHandler : IRequestHandler<MarkRefundAsPai
         var refund = await _refundRepository.GetByIdAsync(request.RefundId);
         if (refund == null) throw new Exception("Refund request not found.");
 
-        //  domain logic
         refund.MarkAsPaidOut(request.PaymentReference);
 
-        // save to DB
         await _refundRepository.SaveAsync(refund);
     }
 }

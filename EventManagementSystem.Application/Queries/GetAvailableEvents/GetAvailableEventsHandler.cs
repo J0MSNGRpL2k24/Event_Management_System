@@ -19,15 +19,15 @@ namespace EventManagementSystem.Application.Queries.GetAvailableEvents
             var events = await _repo.GetAllAsync();
 
             return events
-                .Where(e => e.Status == EventStatus.Published) // AC: Only Published
-                .Where(e => !request.FilterDate.HasValue || e.StartDate.Date == request.FilterDate.Value.Date) // Filter Date
-                .Where(e => string.IsNullOrEmpty(request.FilterLocation) || e.Location.Contains(request.FilterLocation)) // Filter Loc
+                .Where(e => e.Status == EventStatus.Published)
+                .Where(e => !request.FilterDate.HasValue || e.StartDate.Date == request.FilterDate.Value.Date)
+                .Where(e => string.IsNullOrEmpty(request.FilterLocation) || e.Location.Contains(request.FilterLocation))
                 .Select(e => new EventSummaryDto(
                     e.Id,
                     e.Name,
                     e.StartDate,
                     e.Location,
-                    e.Categories.Any() ? e.Categories.Min(c => c.Price.Amount) : 0 // AC: Lowest Price
+                    e.Categories.Any() ? e.Categories.Min(c => c.Price.Amount) : 0
                 )).ToList();
         }
     }

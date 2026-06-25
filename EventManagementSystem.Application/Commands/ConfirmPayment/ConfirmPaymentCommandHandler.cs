@@ -18,10 +18,8 @@ public class ConfirmPaymentCommandHandler : IRequestHandler<ConfirmPaymentComman
         var booking = await _bookingRepository.GetByIdAsync(request.BookingId);
         if (booking == null) throw new Exception("Booking not found.");
 
-        // asumsi default currency adalah IDR
         var payment = new Money(request.AmountPaid, "IDR");
 
-        // eksekusi logic pembayaran dan penerbitan tiket
         booking.ConfirmPayment(payment);
 
         await _bookingRepository.SaveAsync(booking);

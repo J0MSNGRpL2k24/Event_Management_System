@@ -17,7 +17,6 @@ public class EventRepository : IEventRepository
 
     public async Task<Event?> GetByIdAsync(Guid id)
     {
-        // Tetap gunakan Include agar tiket lama maupun baru terdeteksi oleh Change Tracker
         return await _context.Events
             .Include(e => e.Categories)
             .FirstOrDefaultAsync(e => e.Id == id);

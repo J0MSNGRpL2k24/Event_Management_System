@@ -16,7 +16,6 @@ public class BookingRepository : IBookingRepository
 
     public async Task<Booking?> GetByIdAsync(Guid id)
     {
-        // Include Tickets agar tiket yang di-generate ikut ke-load
         return await _context.Bookings
             .Include(b => b.Tickets)
             .FirstOrDefaultAsync(b => b.Id == id);
@@ -48,34 +47,27 @@ public class BookingRepository : IBookingRepository
 
     public async Task SaveAsync(Booking booking)
     {
-        // Cek apakah booking ini adalah data BARU yang belum dilacak
         if (_context.Entry(booking).State == EntityState.Detached)
         {
           
             await _context.Bookings.AddAsync(booking);
         }
 
-        // Jika data lama, EF Core otomatis melacaknya dari GetByIdAsync.
-        // Langsung save saja.
         await _context.SaveChangesAsync();
     }
 
     public async Task MarkBookingsForRefundAsync(Guid eventId)
     {
-        // 1. Tarik semua booking yang berstatus Paid untuk event tersebut
-        // Include Tickets karena metode MarkAsRefunded() di Domain akan mengubah status tiket juga
         var bookingsToRefund = await _context.Bookings
             .Include(b => b.Tickets)
             .Where(b => b.EventId == eventId && b.Status == BookingStatus.Paid)
             .ToListAsync();
 
-        // 2. Eksekusi domain logic untuk mengubah statusnya
         foreach (var booking in bookingsToRefund)
         {
             booking.MarkAsRefunded();
         }
 
-        // 3. Simpan perubahan massal ke database
         await _context.SaveChangesAsync();
     }
 }

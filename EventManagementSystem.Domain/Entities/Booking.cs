@@ -5,7 +5,6 @@ namespace EventManagementSystem.Domain.Entities;
 
 public class Booking
 {
-    // 1. Properties
     public Guid Id { get; private set; }
     public Guid CustomerId { get; private set; }
     public Guid EventId { get; private set; }
@@ -64,18 +63,15 @@ public class Booking
 
     public void ConfirmPayment(Money paymentAmount)
     {
-        // AC: A booking can only be paid if its status is PendingPayment.
         if (Status != BookingStatus.PendingPayment)
             throw new InvalidOperationException("Booking is not in a pending state.");
 
-        // AC: A booking cannot be paid if the payment deadline has passed.
         if (DateTime.UtcNow > PaymentDeadline)
         {
             Expire();
             throw new InvalidOperationException("Payment deadline has passed.");
         }
 
-        // AC: The payment amount must be equal to the total booking price.
         if (paymentAmount.Amount != TotalPrice.Amount || paymentAmount.Currency != TotalPrice.Currency)
             throw new InvalidOperationException("Payment amount does not match the total booking price.");
 
@@ -84,11 +80,9 @@ public class Booking
         for (int i = 0; i < Quantity; i++)
         {
             string uniqueCode = $"TIX-{Id.ToString().Substring(0, 8).ToUpper()}-{i + 1}";
-            // Tambahkan EventId sebagai parameter kedua
             _tickets.Add(new Ticket(Id, EventId, uniqueCode));
         }
 
-        // AC: After the booking is paid, the system raises the domain event BookingPaid.
         AddDomainEvent(new BookingPaid(Id, CustomerId));
     }
 
@@ -126,13 +120,11 @@ public class Booking
     
     public void MarkAsRefunded()
     {
-        // AC: The related booking is changed to Refunded.
         if (Status != BookingStatus.Paid)
             throw new InvalidOperationException("Only paid bookings can be marked as refunded.");
 
         Status = BookingStatus.Refunded;
 
-        // AC: Related tickets are changed to Cancelled.
         foreach (var ticket in _tickets)
         {
             ticket.Cancel();

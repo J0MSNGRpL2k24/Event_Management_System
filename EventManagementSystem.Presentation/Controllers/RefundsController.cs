@@ -18,7 +18,6 @@ public class RefundsController : ControllerBase
         _mediator = mediator;
     }
 
-    // --- USER STORY 15: Request Refund ---
     [HttpPost]
     public async Task<IActionResult> RequestRefund([FromBody] RequestRefundCommand command)
     {
@@ -33,7 +32,6 @@ public class RefundsController : ControllerBase
         }
     }
 
-    // --- USER STORY 16: Approve Refund ---
     [HttpPost("{id}/approve")]
     public async Task<IActionResult> ApproveRefund(Guid id)
     {
@@ -48,7 +46,6 @@ public class RefundsController : ControllerBase
         }
     }
 
-    // --- USER STORY 17: Reject Refund ---
     [HttpPost("{id}/reject")]
     public async Task<IActionResult> RejectRefund(Guid id, [FromBody] RejectRefundDto request)
     {
@@ -64,7 +61,6 @@ public class RefundsController : ControllerBase
         }
     }
 
-    // --- USER STORY 18: Mark Refund as Paid Out ---
     [HttpPost("{id}/payout")]
     public async Task<IActionResult> MarkAsPaidOut(Guid id, [FromBody] PayoutRefundDto request)
     {
@@ -81,7 +77,6 @@ public class RefundsController : ControllerBase
     }
 }
 
-// Class bantuan (*DTO*) untuk menangkap data dari Body JSON Postman
 public class RejectRefundDto
 {
     public string RejectionReason { get; set; } = string.Empty;

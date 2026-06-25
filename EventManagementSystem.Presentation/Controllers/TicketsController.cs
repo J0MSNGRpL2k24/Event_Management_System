@@ -18,7 +18,6 @@ public class TicketsController : ControllerBase
         _mediator = mediator;
     }
 
-    // --- USER STORY 4: Create Ticket Category ---
     [HttpPost("categories")]
     public async Task<IActionResult> CreateCategory([FromBody] CreateTicketCategoryCommand command)
     {
@@ -29,13 +28,10 @@ public class TicketsController : ControllerBase
         }
         catch (Exception ex)
         {
-            // Menangkap error dari Domain (misal: harga < 0, kuota melebihi kapasitas event)
             return BadRequest(new { Message = ex.Message });
         }
     }
 
-    // --- USER STORY 5: Disable Ticket Category ---
-    // Menggunakan route parameter agar URL lebih deskriptif dan mudah di-test
     [HttpPost("events/{eventId}/categories/{categoryId}/disable")]
     public async Task<IActionResult> DisableCategory(Guid eventId, Guid categoryId)
     {
@@ -44,17 +40,14 @@ public class TicketsController : ControllerBase
             var command = new DisableTicketCategoryCommand(eventId, categoryId);
             await _mediator.Send(command);
 
-            // 204 No Content adalah standar RESTful untuk update state yang berhasil
             return NoContent();
         }
         catch (Exception ex)
         {
-            // Menangkap error dari Domain (misal: event sudah completed)
             return BadRequest(new { Message = ex.Message });
         }
     }
 
-    // --- USER STORY 12: View Purchased Tickets ---
     [HttpGet("customer/{customerId}")]
     public async Task<IActionResult> GetCustomerTickets(Guid customerId)
     {
@@ -70,7 +63,6 @@ public class TicketsController : ControllerBase
         }
     }
 
-    // --- USER STORY 13 & 14: Check In Ticket & Reject Invalid ---
     [HttpPost("checkin")]
     public async Task<IActionResult> CheckIn([FromBody] CheckInTicketCommand command)
     {

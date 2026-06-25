@@ -31,14 +31,12 @@ public class BookingsController : ControllerBase
         }
     }
 
-    // --- TAMBAHAN BARU UNTUK SECTION PAYMENT ---
 
     [HttpPost("{id}/pay")]
     public async Task<IActionResult> ConfirmPayment(Guid id, [FromBody] ConfirmPaymentRequest request)
     {
         try
         {
-            // Menggabungkan ID dari URL dan Amount dari Body JSON
             var command = new ConfirmPaymentCommand(id, request.AmountPaid);
             await _mediator.Send(command);
 
@@ -55,7 +53,6 @@ public class BookingsController : ControllerBase
     {
         try
         {
-            // Eksekusi ini bisa dipanggil manual untuk mendemonstrasikan sistem kedaluwarsa
             var command = new ExpireBookingCommand(id);
             await _mediator.Send(command);
 
@@ -68,7 +65,6 @@ public class BookingsController : ControllerBase
     }
 }
 
-// Class bantuan (*DTO*) agar JSON dari Postman bisa ditangkap dengan rapi
 public class ConfirmPaymentRequest
 {
     public decimal AmountPaid { get; set; }
